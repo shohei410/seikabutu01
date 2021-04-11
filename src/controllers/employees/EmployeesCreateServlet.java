@@ -35,20 +35,25 @@ public class EmployeesCreateServlet extends HttpServlet {
      * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        //なりすまし等のセキュリティ対策
         String _token = (String)request.getParameter("_token");
         if(_token != null && _token.equals(request.getSession().getId())) {
             EntityManager em = DBUtil.createEntityManager();
 
+         // Employeeのインスタンスを生成
             Employee e = new Employee();
-
+            //eの各フィールドにデータを代入 例：String title = "taro";
+                                         // m.setTitle(title);
             e.setCode(request.getParameter("code"));
             e.setName(request.getParameter("name"));
+
             e.setPassword(
                 EncryptUtil.getPasswordEncrypt(
                     request.getParameter("password"),
                         (String)this.getServletContext().getAttribute("pepper")
                     )
                 );
+
             e.setAdmin_flag(Integer.parseInt(request.getParameter("admin_flag")));
 
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
@@ -67,9 +72,11 @@ public class EmployeesCreateServlet extends HttpServlet {
                 RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/employees/new.jsp");
                 rd.forward(request, response);
             } else {
+                 // データベースに保存
                 em.getTransaction().begin();
                 em.persist(e);
                 em.getTransaction().commit();
+
                 request.getSession().setAttribute("flush", "登録が完了しました。");
                 em.close();
 
